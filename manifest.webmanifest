@@ -1,0 +1,16 @@
+﻿{
+  "name": "حروفي — Hurufi",
+  "short_name": "حروفي",
+  "description": "تعلّم القراءة والكتابة بالعربية — Learn to read and write Arabic",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f0fdfa",
+  "theme_color": "#0d9488",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
