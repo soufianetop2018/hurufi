@@ -64,7 +64,7 @@ const Store = {
     const l = {
       id: uuid(), name: String(name || "").trim().slice(0, 30) || "🙂", kind: kind === "adult" ? "adult" : "child",
       avatar: avatar || AVATARS[0], color: COLORS[this.s.learners.length % COLORS.length],
-      owner: (window.Cloud && Cloud.uid()) || null, created: new Date().toISOString(),
+      owner: (typeof Cloud !== "undefined" && Cloud.uid()) || null, created: new Date().toISOString(),
       xp: 0, progress: {}, badges: {}, mistakes: {}, log: [], days: [], traced: 0,
     };
     this.s.learners.push(l);
@@ -86,7 +86,7 @@ const Store = {
     if (l && l.owner) this.s.removed.push(id);
     if (this.s.current === id) this.s.current = null;
     this.save();
-    if (window.Cloud) Cloud.schedule();
+    if (typeof Cloud !== "undefined") Cloud.schedule();
   },
 
   resetLearner(id) {

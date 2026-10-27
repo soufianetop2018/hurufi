@@ -85,6 +85,10 @@ const Cloud = {
     this.status = "syncing";
     const uid = this.uid();
     try {
+      // Un apprenant créé sans propriétaire (ancienne version, ou avant la connexion) rejoint le compte.
+      Store.learners().forEach(l => {
+        if (!l.owner) { l.owner = uid; if (!Store.s.dirty.includes(l.id)) Store.s.dirty.push(l.id); }
+      });
       for (const id of Store.s.removed.slice()) {
         const { error } = await this.client.from(CLOUD.table).delete().eq("id", id);
         if (error) throw error;
