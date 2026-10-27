@@ -58,7 +58,7 @@ Screens.welcome = () => {
     Sfx.click();
     setLang(b.dataset.l);
     Speech.sayT(DATA.ui.feedback.welcome[0]);
-    go("#/new");
+    go(Cloud.signedIn() ? "#/new" : "#/account/signup");
   });
 };
 
@@ -80,7 +80,7 @@ Screens.newLearner = (edit = null) => {
       <div class="field"><span>${esc(t("avatar"))}</span>
         <div class="avatars">${AVATARS.map(a => `<button class="av ${a === avatar ? "on" : ""}" data-a="${a}">${a}</button>`).join("")}</div></div>
       <button class="btn primary big wide" id="ln-ok">✔ ${esc(t(edit ? "save" : "start"))}</button>
-      ${first ? `<p class="muted small center-text">${esc(t("no_account_needed"))}</p>` : ""}
+      ${first ? `<p class="muted small center-text">☁️ ${esc(t("saved_in_account"))}</p>` : ""}
     </section>
   </div>`;
   $$("#ln-kind button").forEach(b => b.onclick = () => {
@@ -393,23 +393,16 @@ HelperTabs.settings = el => {
 
 HelperTabs.account = el => {
   if (!Cloud.client) { el.innerHTML = `<div class="card"><p>${esc(t("cloud_unavailable"))}</p></div>`; return; }
-  if (!Cloud.session) {
-    el.innerHTML = `<div class="card">
-      <h2>☁️ ${esc(t("account_title"))}</h2>
-      <p>${esc(t("account_why"))}</p>
-      <ul class="perks"><li>${esc(t("perk_backup"))}</li><li>${esc(t("perk_devices"))}</li><li>${esc(t("perk_shared"))}</li></ul>
-      <div class="row wrap center"><a class="btn primary" href="#/account/signup">✨ ${esc(t("create_account"))}</a>
-        <a class="btn secondary" href="#/account/login">${esc(t("sign_in"))}</a></div>
-      <p class="muted small">${esc(t("account_optional"))}</p></div>`;
-    return;
-  }
+  // Le compte est obligatoire : ici on est toujours connecté (parfois sans Internet pour l'instant).
+  if (!Cloud.session) Cloud.status = "offline";
   const st = { ok: "✅ " + t("sync_ok"), syncing: "⏳ " + t("sync_running"), offline: "📴 " + t("sync_offline"),
                error: "⚠️ " + t("sync_error"), local: "" }[Cloud.status] || "";
   el.innerHTML = `<div class="card">
     <h2>☁️ ${esc(t("account_title"))}</h2>
     <p>${esc(t("signed_in_as"))} <b dir="ltr">${esc(Cloud.email())}</b></p>
     <p id="ac-status">${esc(st)}</p>
-    <div class="row wrap"><button class="btn secondary" id="ac-sync">🔄 ${esc(t("sync_now"))}</button>
+    <ul class="perks"><li>${esc(t("perk_backup"))}</li><li>${esc(t("perk_devices"))}</li><li>${esc(t("perk_shared"))}</li></ul>
+    <div class="row wrap"><button class="btn secondary" id="ac-sync" ${Cloud.session ? "" : "disabled"}>🔄 ${esc(t("sync_now"))}</button>
       <button class="btn ghost" id="ac-out">🚪 ${esc(t("sign_out"))}</button></div>
   </div>
   <div class="card danger-zone">

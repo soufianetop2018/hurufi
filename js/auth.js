@@ -21,8 +21,7 @@ function authMessage(error) {
 }
 
 Screens.account = mode => {
-  if (!Cloud.client) return go("#/helper/account");
-  if (Cloud.session && mode !== "newpass") return go("#/helper/account");
+  if (Cloud.signedIn() && Cloud.client && mode !== "newpass") return go("#/home");
   mode = mode || "login";
   const email = esc(Auth.email);
   const pw = (id, label, hint, auto) => `<div class="field"><label for="${id}">${esc(t(label))}</label>
@@ -76,11 +75,24 @@ Screens.account = mode => {
         <button class="btn primary big wide" type="submit">✔ ${esc(t("save"))}</button>
       </form>`,
   };
+  // Avant d'entrer dans l'appli (compte obligatoire) : logo, langue et une phrase d'explication.
+  const gate = !Cloud.signedIn();
   app().innerHTML = `<div class="page">
-    ${header({ back: "#/helper/account", title: `☁️ ${t("account_title")}` })}
+    ${gate ? `<header class="auth-brand"><div class="logo-small">${logoSvg()}</div>
+        <div><b>حُرُوفِي <span dir="ltr">Hurufi</span></b><small>${esc(t("account_required"))}</small></div>
+        <button class="icon-btn" id="au-lang" aria-label="${esc(t("language"))}">${langLabel()}</button></header>`
+      : header({ back: "#/helper/account", title: `☁️ ${t("account_title")}` })}
+    ${gate && (mode === "signup" || mode === "login") ? `<div class="seg auth-tabs">
+        <a href="#/account/signup" class="${mode === "signup" ? "on" : ""}">${esc(t("create_account"))}</a>
+        <a href="#/account/login" class="${mode === "login" ? "on" : ""}">${esc(t("sign_in"))}</a></div>` : ""}
     <section class="card auth">${forms[mode] || forms.login}</section>
     <p class="legal-links"><a href="privacy.html#${lang()}" target="_blank" rel="noopener">🔒 ${esc(t("privacy"))}</a></p>
   </div>`;
+  if ($("#au-lang")) $("#au-lang").onclick = () => {
+    const order = ["ar", "fr", "en"];
+    setLang(order[(order.indexOf(lang()) + 1) % 3]);
+    Screens.account(mode);
+  };
   $$(".pw-eye").forEach(b => b.onclick = () => {
     const input = $("#" + b.dataset.for);
     input.type = input.type === "password" ? "text" : "password";

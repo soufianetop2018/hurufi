@@ -19,6 +19,7 @@ const Cloud = {
   syncing: false,
   status: "local",       // local | ok | syncing | offline | error
   timer: null,
+  ready: Promise.resolve(),
 
   init() {
     if (!window.supabase) return;
@@ -28,15 +29,17 @@ const Cloud = {
     this.client.auth.onAuthStateChange((event, session) => {
       const had = this.session;
       this.session = session;
+      if (session) this.remember();
       if (event === "PASSWORD_RECOVERY") { this.recovering = true; setTimeout(() => go("#/account/newpass")); }
       // setTimeout : ne jamais rappeler Supabase depuis ce rappel (blocage possible).
       if (session && !had) setTimeout(() => this.afterSignIn());
-      if (event === "SIGNED_OUT") this.status = "local";
+      if (event === "SIGNED_OUT") { this.status = "local"; this.forget(); }
     });
-    this.client.auth.getSession().then(({ data }) => {
+    // Le premier écran attend de savoir si quelqu'un est connecté (voir main.js).
+    this.ready = this.client.auth.getSession().then(({ data }) => {
       this.session = data.session;
-      if (this.session) this.sync();
-    });
+      if (this.session) { this.remember(); this.sync(); }
+    }).catch(() => {});
     // Lien de confirmation reçu par e-mail : on nettoie l'adresse.
     const fromLink = new URLSearchParams(location.hash.replace(/^#\/?/, ""));
     if (fromLink.has("access_token") || fromLink.has("error")) {
@@ -52,8 +55,21 @@ const Cloud = {
   },
 
   user() { return this.session ? this.session.user : null; },
-  uid() { return this.session ? this.session.user.id : null; },
-  email() { return this.session ? this.session.user.email : ""; },
+  uid() { return this.session ? this.session.user.id : (Store.s.account || {}).uid || null; },
+  email() { return this.session ? this.session.user.email : (Store.s.account || {}).email || ""; },
+
+  /* Le compte est obligatoire. Une fois connecté, on retient le compte sur l'appareil : sans Internet
+     (ou pendant que le jeton se renouvelle), l'appli reste utilisable et se synchronise ensuite. */
+  signedIn() { return !!(this.session || Store.s.account); },
+  remember() {
+    const u = this.session.user;
+    if (!Store.s.account || Store.s.account.uid !== u.id) {
+      Store.s.account = { uid: u.id, email: u.email };
+      Store.s.knownAccount = true;          // la prochaine fois, proposer « se connecter » plutôt que l'inscription
+      Store.save();
+    }
+  },
+  forget() { Store.s.account = null; Store.save(); },
 
   /* Adresse vers laquelle renvoient les e-mails (le site, même depuis l'appli Android). */
   redirect() {
@@ -164,7 +180,7 @@ const Cloud = {
     Store.s.learners = Store.learners().filter(l => l.owner !== uid);
     Store.s.dirty = [];
     if (!Store.learner(Store.s.current)) Store.s.current = null;
-    Store.save();
+    this.forget();
   },
 
   /* Suppression définitive du compte et de toutes ses données (exigé par Google Play). */
@@ -177,7 +193,7 @@ const Cloud = {
     Store.s.dirty = [];
     Store.s.removed = [];
     if (!Store.learner(Store.s.current)) Store.s.current = null;
-    Store.save();
+    this.forget();
   },
 };
 

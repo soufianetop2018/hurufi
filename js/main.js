@@ -19,8 +19,10 @@ function route() {
   if (Play.ctx && !Play.ctx.over && name !== "play") Play.ctx.over = true;
 
   if (!Settings.get("lang") && name !== "welcome") return Screens.welcome();
+  // Le compte est obligatoire : sans compte, seuls la bienvenue et les écrans de connexion s'ouvrent.
+  if (!Cloud.signedIn() && !["welcome", "account"].includes(name)) return Screens.account(Store.s.knownAccount ? "login" : "signup");
   const noLearner = !Store.learners().length;
-  if (noLearner && !["welcome", "new", "helper", "account"].includes(name)) return Screens.welcome();
+  if (noLearner && !["welcome", "new", "helper", "account"].includes(name)) return Screens.newLearner();
 
   switch (name) {
     case "welcome": return Screens.welcome();
@@ -58,7 +60,8 @@ function boot() {
   if (IN_APP && !window.AndroidSpeech) window.SpeechRecognition = window.webkitSpeechRecognition = undefined;
   document.addEventListener("visibilitychange", () => { if (document.hidden) Speech.stop(); });
   addEventListener("hashchange", route);
-  route();
+  // On attend (au plus 4 s) de savoir si une session existe, pour ne pas montrer la connexion par erreur.
+  Promise.race([Cloud.ready, wait(4000)]).then(route);
 }
 
 boot();

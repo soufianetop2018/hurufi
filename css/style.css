@@ -421,3 +421,14 @@ input[type=range] { accent-color: var(--teal); width: 100%; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
   .bubble { animation: none; bottom: auto; top: 30%; }
 }
+
+/* Compte obligatoire : en-tête des écrans de connexion */
+.auth-brand { display: flex; align-items: center; gap: 12px; margin: 8px 0 12px; }
+.auth-brand div { flex: 1; display: flex; flex-direction: column; }
+.auth-brand b { font-family: var(--read); font-size: 1.6rem; color: var(--teal-d); white-space: nowrap; }
+.auth-brand b span { font-family: var(--ui); font-size: 1rem; color: var(--orange); }
+.auth-brand small { color: var(--muted); font-weight: 700; }
+.auth-brand .logo-small svg { width: 56px; height: 56px; }
+.auth-tabs { margin-bottom: 4px; }
+.seg a { flex: 1; text-align: center; border-radius: 12px; padding: 10px; font-weight: 800; text-decoration: none; color: var(--ink); }
+.seg a.on { background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.08); color: var(--teal-d); }
